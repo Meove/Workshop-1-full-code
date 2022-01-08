@@ -1,0 +1,1332 @@
+#include "SFML\Window.hpp"
+#include <Windows.h>
+#include "SFML\Graphics.hpp"
+#include "SFML/Audio.hpp"
+#include "SFML\System.hpp"
+#include "math.h"
+#include "Game.h"
+#include <cmath>
+#include <vector>
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
+#include <string>
+
+using namespace std;
+using namespace sf;
+
+/*REMINDER
+- Level 1 is enemy battle [DONE]
+- Level 2 is collect ruby + enemy (enemy is optional) [DONE]
+- Level 3 is boss battle [DONE]
+
+- Level 1 jangan lupa tambah damage hit ke enemy [DONE]
+- Level 2 tambah CC [DONE]
+- Level 2 set position spiky [DONE]
+- Tambah shooting cooldown [DONE]
+- Save file timer [DONE]
+*/
+
+
+HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+class Bullet
+{
+	public:
+		CircleShape shape;
+		Vector2f currVelocity;
+		float maxSpeed;
+		float BulletVelocity = 15.f;
+		float BulletRadius = 5.f;
+
+		Bullet(float radius = 5.f)
+			: currVelocity(0.f, 0.f), maxSpeed(15.f)
+		{
+			this->shape.setRadius(radius);
+			this->shape.setFillColor(Color::Red);
+		}
+};
+
+void Option1() {
+	system("CLS");
+	SetConsoleTextAttribute(hConsole, 12);
+	cout <<
+		R"(
+***************************************************************
+X                       ______                                X
+X                    .-"      "-.                             X
+X                   /            \                            X
+X                  |              |                           X
+X                  |,  .-.  .-.  ,|                           X
+X                  | )(__/  \__)( |                           X
+X                  |/     /\     \|                           X
+X        (@_       (_     ^^     _)                           X
+X   _     ) \_______\__|IIIIII|__/__________________________  X
+X  (_)@8@8{}<________|-\IIIIII/-|___________________________> X
+X         )_/        \          /                             X
+X        (@           `--------`                              X
+X                                                             X
+***************************************************************
+)" << endl;
+	SetConsoleTextAttribute(hConsole, 14);
+	cout << "______________________________________" << endl;
+	cout << "|Lord Darkness: THEN, COME INFRONT!!!|" << endl;
+	system("pause");
+}
+
+void Option2() {
+	system("CLS");
+	SetConsoleTextAttribute(hConsole, 12);
+	cout <<
+		R"(
+-----------------------------------------------------------------------
+|                                .___.                                |
+|            /)               ,-^     ^-.                             |
+|           //               /           \                            |
+|  .-------| |--------------/  __     __  \-------------------.__     |
+|  |WMWMWMW| |>>>>>>>>>>>>> | />>\   />>\ |>>>>>>>>>>>>>>>>>>>>>>:>   |
+|  `-------| |--------------| \__/   \__/ |-------------------'^^     |
+|           \\               \    /|\    /                            |
+|            \)               \   \_/   /                             |
+|                              |       |                              |
+|                              |+H+H+H+|                              |
+|                              \       /                              |
+|                                                                     |
+-----------------------------------------------------------------------
+)" << endl;
+	SetConsoleTextAttribute(hConsole, 14);
+	cout << "______________________________________________________________________________________________________" << endl;
+	cout << "|Lord Darkness: SO, YOU STILL WEAK TO FACE THE CHALLENGE, HUH? COME BACK AGAIN WHEN YOU BECOME STRONG|" << endl;
+}
+
+int main()
+{
+	char choose = 0;
+	bool quitOption = false;
+
+	SetConsoleTextAttribute(hConsole, 9);
+	cout <<
+		R"(
+  ===================================================================================
+//                                                                                   \\
+||          .%%(*,/(/*,*#..                                                          ||
+||       .,#(%%%%%%%%%%%%%#*,(      ............................................     ||
+||     .%/%%%%%%%%%%%%%%%%%%%/..    /%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*    ||
+||    .&.%%%%%%%%%%%%%%%%%%%%%.%,   /%%  %%%%#  %          %%%%%%%&   #%%%%   %%*    ||
+||    .,#%%%%%%%%%%%%%%%%%%%%%%#.   /%%  %%%%#  %%%%%  %%%*    ,%%&    %%%    %%*    ||
+||    %%#%%%%%%%%%%%%%%%%%%%%%%%%   /%%  %%%%#  %%%%%  %%  *%%#  %&  . .%#    %%*    ||
+||    .,*%%%%%%%%%%%*********,      /%%  %%%%#  %%%%%  %#        (&  %  %  %  %%*    ||
+||     .(,%%%%%%%%%%,,,,,,,,,,,,,   /%%   %%%  ,%%%%%  %%  ,%%(  %&  %#   (%  %%*    ||
+||       .(*(%%%%%%%%%%%%%%%%%%%%   /%%%#     %%%%%%%  %%%(    .%%&  %%   %%  %%*    ||
+||          /%&&,,((**              /%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*    ||
+||                                                                                   ||
+||                  *************   ............................................     ||
+||                                                                                   ||
+||        Name: Muhammad Najmuddin Bin Radzuan                                       ||
+||   No.Matric: B032010435                                                           ||
+\\                                                                                   //
+  ###################################################################################
+)" << endl;
+	
+	SetConsoleTextAttribute(hConsole, 12);
+
+
+	std::cout <<
+		R"(
+
+ _______               _______              _________              _______    _                   _______    _______    _______    _          _______ 
+(  ____ \  |\     /|  (  ____ )  |\     /|  \__   __/  |\     /|  (  ___  )  ( \                 (  ___  )  (  ____ )  (  ____ \  ( (    /|  (  ___  )
+| (    \/  | )   ( |  | (    )|  | )   ( |     ) (     | )   ( |  | (   ) |  | (                 | (   ) |  | (    )|  | (    \/  |  \  ( |  | (   ) |
+| (_____   | |   | |  | (____)|  | |   | |     | |     | |   | |  | (___) |  | |         _____   | (___) |  | (____)|  | (__      |   \ | |  | (___) |
+(_____  )  | |   | |  |     __)  ( (   ) )     | |     ( (   ) )  |  ___  |  | |        (_____)  |  ___  |  |     __)  |  __)     | (\ \) |  |  ___  |
+      ) |  | |   | |  | (\ (      \ \_/ /      | |      \ \_/ /   | (   ) |  | |                 | (   ) |  | (\ (     | (        | | \   |  | (   ) |
+/\____) |  | (___) |  | ) \ \__    \   /    ___) (___    \   /    | )   ( |  | (____/\           | )   ( |  | ) \ \__  | (____/\  | )  \  |  | )   ( |
+\_______)  (_______)  |/   \__/     \_/     \_______/     \_/     |/     \|  (_______/           |/     \|  |/   \__/  (_______/  |/    )_)  |/     \|
+                                                                                                                                                      
+
+)" << endl;
+
+	SetConsoleTextAttribute(hConsole, 12);
+	cout << "_______________________________________________________" << endl;
+	cout << "|Lord Darkness: WELCOME TO SURVIVAL ARENA, CHALLENGER!|" << endl;
+	SetConsoleTextAttribute(hConsole, 10);
+	cout << "            ___________________________" << endl;
+	cout << "            |WILL YOU ENTER THE ARENA?|" << endl << endl << endl;
+	SetConsoleTextAttribute(hConsole, 14);
+	cout << "1) CHALLENGE ACCEPT!" << endl;
+	cout << "2) NO WAY!" << endl
+		 << endl << "Enter your choose: ";
+
+
+	cin >> choose;
+	switch (choose) {
+	case '1':
+		Option1();
+		break;
+
+	case '2':
+		Option2();
+		quitOption = true;
+		break;
+
+	default:
+		cout << "CHOOSE WISELY!!";
+		quitOption = true;
+		break;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////GAME START////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	const unsigned WINDOW_WIDTH = 800;
+	const unsigned WINDOW_HEIGHT = 600;
+	srand(time(NULL));
+	RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Survival Arena");
+	RenderWindow windowTutor(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Survial Arena (Tutorial)");
+	window.setFramerateLimit(60);
+	Event event;
+	
+	sf::Clock clock; //Starts the clock
+	sf::Clock timer; //Timer for game
+	sf::Clock movement_change1; //Change static movement 
+
+	/*+++++++++++++++++++*/
+	/*==*/Game gamer;/*==*/
+	/*+++++++++++++++++++*/
+
+	//Player
+	int health = 200;
+	string health_string = to_string(health);
+	//CircleShape player(25.f);
+
+	//Player Damage
+	float DamageReceive = 0.5f;
+	float DamageReduction = 0.3f;
+
+	//player.setFillColor(Color::Green);
+	sf::Texture player;
+	if (!player.loadFromFile("image/player/player.png"))
+	{
+		cout << "no player";
+	}
+	player.setSmooth(true);
+
+	sf::Sprite sprite_player;
+	sprite_player.setTexture(player);
+	sprite_player.setPosition(sf::Vector2f(380, 550));
+	//sprite_player.setScale(0.3f, 0.3f);
+	sprite_player.setOrigin(sf::Vector2f(sprite_player.getTexture()->getSize().x * 0.5, sprite_player.getTexture()->getSize().y * 0.5));
+	float Move_W = -3.f;
+	float Move_A = -3.f;
+	float Move_S = 3.f;
+	float Move_D = 3.f;
+	const float PI = 3.14159265;
+
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+	//Bullet
+	Bullet b1;
+	vector<Bullet> bullets;
+
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+	//Enemy Follow x.y & enemy counter
+																																		/*
+	float Player_x = 0;			
+	float Player_y = 0;
+
+	int EnemyCounter = 0;
+																																		*/
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+	//Enemy
+	// 
+	//Enemy Level 1 [1]
+	sf::Texture enemy2;
+	if (!enemy2.loadFromFile("image/enemy/enemy2.png"))
+	{
+		cout << "no enemy 2";
+	}
+
+	sf::Sprite sprite_enemy2;
+	sprite_enemy2.setTexture(enemy2);
+	sprite_enemy2.setPosition(sf::Vector2f(2000, 2000));
+	int enemy_hp = 25;
+	string health_enemy_string = to_string(enemy_hp);
+
+
+	//Enemy Level 1 [2]
+	sf::Texture enemy3;
+	if (!enemy3.loadFromFile("image/enemy/enemy2.png"))
+	{
+		cout << "no enemy 3";
+	}
+
+	sf::Sprite sprite_enemy3;
+	sprite_enemy3.setTexture(enemy3);
+	sprite_enemy3.setPosition(sf::Vector2f(2000, 2000));
+	int enemy3_hp = 20;
+	string health_enemy3_string = to_string(enemy3_hp);
+
+
+	//Enemy Level 1 [3]
+	sf::Texture enemy4;
+	if (!enemy4.loadFromFile("image/enemy/enemy2.png"))
+	{
+		cout << "no enemy 4";
+	}
+
+	sf::Sprite sprite_enemy4;
+	sprite_enemy4.setTexture(enemy4);
+	sprite_enemy4.setPosition(sf::Vector2f(2000, 2000));
+	int enemy4_hp = 45;
+	string health_enemy4_string = to_string(enemy4_hp);
+
+
+	//Enemy Level 1 [4]
+	sf::Texture enemy5;
+	if (!enemy5.loadFromFile("image/enemy/enemy1.png"))
+	{
+		cout << "no enemy 5";
+	}
+
+	sf::Sprite sprite_enemy5;
+	sprite_enemy5.setTexture(enemy5);
+	sprite_enemy5.setPosition(sf::Vector2f(2000, 2000));
+	sprite_enemy5.setScale(1.1f, 1.1f);
+	int enemy5_hp = 20;
+	string health_enemy5_string = to_string(enemy5_hp);
+
+	//EnemyBeta
+	RectangleShape enemy;
+	enemy.setFillColor(Color::Magenta);
+	enemy.setSize(Vector2f(50.f, 50.f));
+	int spawnCounter = 20;
+
+	std::vector<RectangleShape> enemies;
+
+	//Spiky Level 2
+	sf::Texture spiky;
+	spiky.loadFromFile("image/enemy/spiky.png");
+
+	sf::Sprite sprite_spiky1;
+	sprite_spiky1.setTexture(spiky);
+	sprite_spiky1.setScale(0.4f, 0.4f);
+
+	sf::Sprite sprite_spiky2;
+	sprite_spiky2.setTexture(spiky);
+	sprite_spiky2.setScale(0.4f, 0.4f);
+	sprite_spiky1.setPosition(sf::Vector2f(3000, 2000));
+	sprite_spiky2.setPosition(sf::Vector2f(3000, 2000));
+
+	//Spiky long Level 2
+	sf::Texture spiky_long;
+	spiky_long.loadFromFile("image/enemy/spiky_long.png");
+
+	sf::Sprite sprite_spiky_long;
+	sprite_spiky_long.setTexture(spiky_long);
+	sprite_spiky_long.setPosition(sf::Vector2f(5000, 3000));
+	sprite_spiky_long.setScale(0.5f, 0.6f);
+
+	//Flame long Level 3
+	sf::Texture flame_long;
+	flame_long.loadFromFile("image/enemy/flame_long.png");
+
+	sf::Sprite sprite_flame_long;
+	sprite_flame_long.setTexture(flame_long);
+	sprite_flame_long.setPosition(sf::Vector2f(5000, 3000));
+	sprite_flame_long.setScale(0.3f, 0.4f);
+
+	sf::Sprite sprite_flame_long2;
+	sprite_flame_long2.setTexture(flame_long);
+	sprite_flame_long2.setRotation(45.f);
+	sprite_flame_long2.setPosition(sf::Vector2f(5000, 3000));
+	sprite_flame_long2.setScale(0.3f, 0.4f);
+
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+	//Font//
+	sf::Font font;
+	if (!font.loadFromFile("image/font/arial.ttf"))
+	{
+		cout << "bruh";
+	}
+	//Timer text
+	sf::Text timer_text;
+	timer_text.setFont(font);
+	timer_text.setFillColor(sf::Color::Red);
+	timer_text.setPosition(310.f, 0.f);
+	timer_text.setCharacterSize(30);
+	timer_text.setOutlineColor(sf::Color::Black);
+	timer_text.setOutlineThickness(2);
+
+	//Timer best time text 
+	sf::Text best_timer_text;
+	best_timer_text.setFont(font);
+	best_timer_text.setFillColor(sf::Color::Blue);
+
+	string line;
+	ifstream besttime("savefile/best_time.txt");
+	if (besttime.is_open())
+	{
+		while (getline(besttime, line))
+		{
+			
+		}
+		besttime.close();
+	}
+	else cout << "Unable to open file";
+
+
+	best_timer_text.setString(line);
+	best_timer_text.setOutlineColor(sf::Color::Black);
+	best_timer_text.setOutlineThickness(1.5);
+	best_timer_text.setPosition(50, 400);
+
+	//Player HP text
+	sf::Text health_text;
+	health_text.setFont(font); // font is a sf::Font
+	health_text.setString(health_string);
+	health_text.setCharacterSize(20); // in pixels, not points!
+	health_text.setFillColor(sf::Color::Red);
+	health_text.setStyle(sf::Text::Bold);
+	health_text.setOutlineColor(sf::Color::Black);
+	health_text.setOutlineThickness(2);
+	health_text.setPosition(sf::Vector2f(300, 0));
+
+	//Enemy 2 HP text
+	sf::Text health_enemy_text;
+	health_enemy_text.setFont(font); // font is a sf::Font
+	health_enemy_text.setString(health_enemy_string);
+	health_enemy_text.setCharacterSize(20); // in pixels, not points!
+	health_enemy_text.setFillColor(sf::Color::Red);
+	health_enemy_text.setStyle(sf::Text::Bold);
+	health_enemy_text.setOutlineColor(sf::Color::Black);
+	health_enemy_text.setOutlineThickness(2);
+	health_enemy_text.setPosition(sf::Vector2f(300, 0));
+
+
+	//Enemy 3 HP text
+	sf::Text health_enemy3_text;
+	health_enemy3_text.setFont(font); // font is a sf::Font
+	health_enemy3_text.setString(health_enemy3_string);
+	health_enemy3_text.setCharacterSize(20); // in pixels, not points!
+	health_enemy3_text.setFillColor(sf::Color::Red);
+	health_enemy3_text.setStyle(sf::Text::Bold);
+	health_enemy3_text.setOutlineColor(sf::Color::Black);
+	health_enemy3_text.setOutlineThickness(2);
+	health_enemy3_text.setPosition(sf::Vector2f(300, 0));
+
+
+	//Enemy 4 HP text
+	sf::Text health_enemy4_text;
+	health_enemy4_text.setFont(font); // font is a sf::Font
+	health_enemy4_text.setString(health_enemy4_string);
+	health_enemy4_text.setCharacterSize(20); // in pixels, not points!
+	health_enemy4_text.setFillColor(sf::Color::Red);
+	health_enemy4_text.setStyle(sf::Text::Bold);
+	health_enemy4_text.setOutlineColor(sf::Color::Black);
+	health_enemy4_text.setOutlineThickness(2);
+	health_enemy4_text.setPosition(sf::Vector2f(300, 0));
+
+	//Enemy 5 HP text
+	sf::Text health_enemy5_text;
+	health_enemy5_text.setFont(font); // font is a sf::Font
+	health_enemy5_text.setString(health_enemy5_string);
+	health_enemy5_text.setCharacterSize(20); // in pixels, not points!
+	health_enemy5_text.setFillColor(sf::Color::Red);
+	health_enemy5_text.setStyle(sf::Text::Bold);
+	health_enemy5_text.setOutlineColor(sf::Color::Black);
+	health_enemy5_text.setOutlineThickness(2);
+	health_enemy5_text.setPosition(sf::Vector2f(300, 0));
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+	//Buff
+	bool IsBuffSpeed = false;
+	sf::Texture buff_speed; //Buff for speed
+	if (!buff_speed.loadFromFile("image/buff/buff_speed.png")) 
+	{
+		std::cout << " ";
+	}
+	
+	sf::Sprite sprite_buff_speed;
+	sprite_buff_speed.setTexture(buff_speed);
+	sprite_buff_speed.setPosition(sf::Vector2f(75, 36));
+
+
+	bool IsBuffDefend = false;
+	sf::Texture buff_defend; //Buff for defend
+	if (!buff_defend.loadFromFile("image/buff/buff_defend.png"))
+	{
+		std::cout << " ";
+	}
+	sf::Sprite sprite_buff_defend;
+	sprite_buff_defend.setTexture(buff_defend);
+	sprite_buff_defend.setPosition(sf::Vector2f(650, 56));
+	sprite_buff_defend.setScale(sf::Vector2f(0.2f, 0.2f));
+
+	bool IsBuffHealth = false;
+	sf::Texture buff_hp; //Buff for attack hp
+	if (!buff_hp.loadFromFile("image/buff/buff_health.png"))
+	{
+		std::cout << " ";
+	}
+	sf::Sprite sprite_buff_hp;
+	sprite_buff_hp.setTexture(buff_hp);
+	sprite_buff_hp.setPosition(sf::Vector2f(240, 66));
+	sprite_buff_hp.setScale(1.1f, 1.1f);
+
+	bool IsBuffStrength = false;
+	float BulletStrength = 1.5;
+	sf::Texture buff_strength; //Buff for attack strength
+	if (!buff_strength.loadFromFile("image/buff/buff_strength.png"))
+	{
+		std::cout << " ";
+	}
+	sf::Sprite sprite_buff_strength;
+	sprite_buff_strength.setTexture(buff_strength);
+	sprite_buff_strength.setPosition(sf::Vector2f(480, 36));
+	sprite_buff_strength.setScale(0.2f, 0.2f);
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+	//Vectors
+	Vector2f playerCenter;
+	Vector2f mousePosWindow;
+	Vector2f aimDir;
+	Vector2f aimDirNorm;
+
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+	//Texture
+	sf::Texture texture_lava; //Texture lava
+	if (!texture_lava.loadFromFile("image/texture/lava2.png"))
+	{
+		std::cout << "down";
+	}
+
+	sf::Sprite sprite_lava1;
+	sprite_lava1.setTexture(texture_lava);
+	sprite_lava1.setPosition(sf::Vector2f(6942,6942));
+	sprite_lava1.setScale(2.f, 2.f);
+	
+	sf::Sprite sprite_lava2;
+	sprite_lava2.setTexture(texture_lava);
+	sprite_lava2.setPosition(sf::Vector2f(6942, 6942));
+	sprite_lava2.setScale(2.f, 2.f);
+
+	/*std::vector<sf::Sprite> lava;
+	for (int i = 0; i < 20; ++i) {
+		sf::Sprite sprite_lava;
+		sprite_lava.setTexture(texture_lava);
+		lava.push_back(sprite_lava);
+	}*/
+
+	//===================================================
+	sf::Texture wall;
+	if (!wall.loadFromFile("image/texture/bigbrick.png"))
+	{
+		cout << "no wall";
+	}
+
+	sf::Sprite sprite_wall;
+	sprite_wall.setTexture(wall);
+	sprite_wall.setPosition(sf::Vector2f(2000, 2000));
+	sprite_wall.setScale(0.5f, 2.f);
+
+	//===================================================
+	sf::Texture wall2;
+	if (!wall2.loadFromFile("image/texture/bigbrick.png"))
+	{
+		cout << "no wall2";
+	}
+
+	sf::Sprite sprite_wall2;
+	sprite_wall2.setTexture(wall2);
+	sprite_wall2.setPosition(sf::Vector2f(2000, 2000));
+	sprite_wall2.setScale(0.5f, 2.f);
+
+	//===================================================
+	//Tutorial
+	sf::Texture tutorial;
+	tutorial.loadFromFile("image/texture/tutorialGambar.png");
+	sf:Sprite sprite_tutorial;
+	sprite_tutorial.setTexture(tutorial);
+
+	//Buffroom
+	sf::Texture buffroom;
+	if (!buffroom.loadFromFile("image/texture/buffroom.png"))
+	{
+		cout << "no buffroom";
+	}
+
+	sf::Sprite sprite_buffroom;
+	sprite_buffroom.setTexture(buffroom);
+
+	//===================================================
+	sf::Texture texture_stone; //Texture stone
+	if (!texture_stone.loadFromFile("image/texture/level1.png"))
+	{
+		std::cout << "Never gonna give you up";
+	}
+
+	sf::Sprite sprite_stone;
+	sprite_stone.setTexture(texture_stone);
+	sprite_stone.setPosition(sf::Vector2f(0, 0));
+
+	//===================================================
+	sf::Texture level2;
+	if (!level2.loadFromFile("image/texture/level2.png"))
+	{
+		cout << "no level2";
+	}
+
+	sf::Sprite sprite_level2;
+	sprite_level2.setTexture(level2);
+	sprite_level2.setPosition(sf::Vector2f(0, 0));
+
+	//===================================================
+	sf::Texture level3;
+	if (!level3.loadFromFile("image/texture/level3.png"))
+	{
+		cout << "no level3";
+	}
+
+	sf::Sprite sprite_level3;
+	sprite_level3.setTexture(level3);
+	sprite_level3.setPosition(sf::Vector2f(0, 0));
+
+	//===================================================
+	//Tutorial --> Buffroom
+	sf::Texture TutorToBuff;
+	TutorToBuff.loadFromFile("image/texture/exitTutorial.png");
+	sf::Sprite sprite_TutorToBuff;
+	sprite_TutorToBuff.setTexture(TutorToBuff);
+	sprite_TutorToBuff.setPosition(325, 510);
+
+
+	//Level 1 --> Level 2//
+	sf::Texture changelevel1Detector;
+	if (!changelevel1Detector.loadFromFile("image/texture/level1_to_level2_detector.png"))
+	{
+		cout << "try check image/texture folder again";
+	}
+
+	sf::Sprite sprite_changelevel1Detector;
+	sprite_changelevel1Detector.setTexture(changelevel1Detector);
+	sprite_changelevel1Detector.setPosition(sf::Vector2f(990, 990));
+
+	//Level 2 --> Level 3//
+	sf::Texture changelevel2Detector;
+	if (!changelevel2Detector.loadFromFile("image/texture/level2_to_level3_detector.png"))
+	{
+		cout << "floppa";
+	}
+
+	sf::Sprite sprite_changelevel2Detector;
+	sprite_changelevel2Detector.setTexture(changelevel2Detector);
+	sprite_changelevel2Detector.setPosition(sf::Vector2f(990, 990));
+
+	//Level 3 --> End//
+	sf::Texture changelevel3Detector;
+	if (!changelevel3Detector.loadFromFile("image/texture/level3_to_end_detector.png"))
+	{
+		cout << "floppa";
+	}
+
+	sf::Sprite sprite_changelevel3Detector;
+	sprite_changelevel3Detector.setTexture(changelevel3Detector);
+	sprite_changelevel3Detector.setPosition(sf::Vector2f(4000, 4000));
+
+	/*=======================================================================================================================*/
+	//Ruby 1
+	gamer.ruby1.loadFromFile("image/texture/ruby.png");
+	sf::Sprite sprite_ruby1;
+	sprite_ruby1.setTexture(gamer.ruby1);
+	sprite_ruby1.setPosition(sf::Vector2f(-100, -100));
+	sprite_ruby1.setScale(0.11f, 0.11f);
+
+	//Ruby 2
+	gamer.ruby2.loadFromFile("image/texture/ruby.png");
+	sf::Sprite sprite_ruby2;
+	sprite_ruby2.setTexture(gamer.ruby2);
+	sprite_ruby2.setPosition(sf::Vector2f(-100, -100));
+	sprite_ruby2.setScale(0.11f, 0.11f);
+
+	//Ruby 3
+	gamer.ruby3.loadFromFile("image/texture/ruby.png");
+	sf::Sprite sprite_ruby3;
+	sprite_ruby3.setTexture(gamer.ruby3);
+	sprite_ruby3.setPosition(sf::Vector2f(-100, -100));
+	sprite_ruby3.setScale(0.11f, 0.11f);
+
+	//Ruby 4
+	gamer.ruby4.loadFromFile("image/texture/ruby.png");
+	sf::Sprite sprite_ruby4;
+	sprite_ruby4.setTexture(gamer.ruby4);
+	sprite_ruby4.setPosition(sf::Vector2f(-100, -100));
+	sprite_ruby4.setScale(0.11f, 0.11f);
+
+	//Ruby 5
+	gamer.ruby5.loadFromFile("image/texture/ruby.png");
+	sf::Sprite sprite_ruby5;
+	sprite_ruby5.setTexture(gamer.ruby5);
+	sprite_ruby5.setPosition(sf::Vector2f(-100, -100));
+	sprite_ruby5.setScale(0.11f, 0.11f);
+
+	//Ruby 6
+	gamer.ruby6.loadFromFile("image/texture/ruby.png");
+	sf::Sprite sprite_ruby6;
+	sprite_ruby6.setTexture(gamer.ruby6);
+	sprite_ruby6.setPosition(sf::Vector2f(-100, -100));
+	sprite_ruby6.setScale(0.11f, 0.11f);
+
+	//Ruby 7
+	gamer.ruby7.loadFromFile("image/texture/ruby.png");
+	sf::Sprite sprite_ruby7;
+	sprite_ruby7.setTexture(gamer.ruby7);
+	sprite_ruby7.setPosition(sf::Vector2f(-100, -100));
+	sprite_ruby7.setScale(0.11f, 0.11f);
+
+	/*=======================================================================================================================*/
+	//Text image
+
+	//Buffroom text 1
+	sf::Texture buffroomText1; buffroomText1.loadFromFile("image/texture/buffroom_text1.png");
+	sf::Sprite sprite_buffroomText1;
+	sprite_buffroomText1.setTexture(buffroomText1);
+	sprite_buffroomText1.setPosition(0, 0);
+
+
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+	//Audio//
+	
+	//Shooting sound
+														/*
+	SoundBuffer buffer;
+	if (!buffer.loadFromFile("audio/firegun.wav")) {
+		std::cout << "sdsalllsa";
+	}
+	
+	Sound sound;
+	sound.setBuffer(buffer);
+	sound.play();
+	sound.setPitch(1.2f);
+	sound.setVolume(50.f);
+														*/
+
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+	//Level bool
+	bool changelevel1 = false;
+	bool changelevel2 = false;
+	bool changelevel3 = false;
+
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+
+
+	//6666666666666666666666666666666666666666666//
+		   //WARNING!!!! BOSS SPRITE!!!//
+	gamer.boss.loadFromFile("image/enemy/boss_png.png");
+	gamer.bossLeft.loadFromFile("image/enemy/boss_png_left.png");
+	gamer.sprite_boss.setTexture(gamer.boss);
+	gamer.sprite_boss.setPosition(sf::Vector2f(3000, 3000));
+	gamer.sprite_boss.setScale(0.85f, 0.85f);
+	int boss_hp = 800;
+	string health_boss_string = to_string(boss_hp);
+
+	sf::Text health_boss_text;
+
+	health_boss_text.setFont(font);
+	health_boss_text.setString(health_boss_string);
+	health_boss_text.setCharacterSize(20);
+	health_boss_text.setFillColor(sf::Color::Red);
+	health_boss_text.setStyle(sf::Text::Bold);
+	health_boss_text.setOutlineColor(sf::Color::Black);
+	health_boss_text.setOutlineThickness(2);
+	health_boss_text.setPosition(sf::Vector2f(300, 0));
+
+	//=ABORTABORTABORTABORT=ABORTABORTABORTABORT=//
+
+
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+	/*=======================================================================================================================*/
+
+	while (windowTutor.isOpen())
+	{
+		// check all the window's events that were triggered since the last iteration of the loop
+		sf::Event eventTutor;
+		while (windowTutor.pollEvent(eventTutor))
+		{
+			// "close requested" event: we close the window
+			if (eventTutor.type == sf::Event::Closed)
+				windowTutor.close();
+		}
+
+		if (quitOption == true) {
+			windowTutor.close();
+		}
+
+		if (Mouse::isButtonPressed(Mouse::Left)) {
+			windowTutor.close();
+		}
+		windowTutor.clear();
+		//
+		windowTutor.draw(sprite_tutorial);
+		windowTutor.draw(sprite_TutorToBuff);
+		//
+		windowTutor.display();
+
+	}
+
+
+
+	while (window.isOpen()) {
+
+		while (window.pollEvent(event)) 
+		{
+
+			if (event.type == sf::Event::Closed) 
+			{
+				window.close();
+			}
+		}
+
+		if (quitOption == true) {
+			window.close();
+		}
+		//Update
+		/*=======================================================================================================================*/
+		//Time function
+
+		//Bullet cooldown
+		sf::Time elapsed1 = clock.getElapsedTime();
+
+		//Timer
+		sf::Time elapsed_timer = timer.getElapsedTime();
+		timer_text.setString(to_string(elapsed_timer.asSeconds()));
+		
+		//Movement change time
+		sf::Time elapsed_moveChange1 = movement_change1.getElapsedTime();
+
+		/*=======================================================================================================================*/
+		/*=======================================================================================================================*/
+		//Vectors//
+		playerCenter = Vector2f(sprite_player.getPosition().x, sprite_player.getPosition().y);
+		mousePosWindow = Vector2f(Mouse::getPosition(window));
+		aimDir = mousePosWindow - playerCenter;
+		aimDirNorm = aimDir / (static_cast<float>(sqrt(pow(aimDir.x, 2) + pow(aimDir.y, 2))));
+		
+
+		//Enemy movement for level 1
+		if (elapsed_moveChange1.asSeconds() >= 3 && changelevel1 == true) {
+			sprite_enemy2.move(-1.5f, 0.f);
+			sprite_enemy3.move(0.f, 1.f);
+			sprite_enemy4.move(0.f, -3.f);
+			if (elapsed_moveChange1.asSeconds() >= 6) {
+				movement_change1.restart();
+			}
+		}
+		else if(changelevel1 == true)
+		{
+			sprite_enemy2.move(1.5f, 0.f);
+			sprite_enemy3.move(0.f, -1.f);
+			sprite_enemy4.move(0.f, 3.f);
+		}
+
+		//Boss movement
+		if (elapsed_moveChange1.asSeconds() >= 3 && changelevel3 == true) {
+			gamer.sprite_boss.move(-2.f, 0.f);
+			gamer.sprite_boss.setTexture(gamer.bossLeft);
+			if (elapsed_moveChange1.asSeconds() >= 9) {
+				gamer.sprite_boss.move(4.f , -1.5f);
+				gamer.sprite_boss.setTexture(gamer.boss);
+				if (elapsed_moveChange1.asSeconds() >= 12) {
+					movement_change1.restart();
+				}
+			}
+		}
+		else if(changelevel3 == true)
+		{
+			gamer.sprite_boss.move(2.f, 1.5f);
+			gamer.sprite_boss.setTexture(gamer.boss);
+		}
+
+
+		/*=======================================================================================================================*/
+		/*=======================================================================================================================*/
+		//Player
+		if (Keyboard::isKeyPressed(Keyboard::A))
+			sprite_player.move(Move_A, 0);
+		if (Keyboard::isKeyPressed(Keyboard::D))
+			sprite_player.move(Move_D, 0);
+		if (Keyboard::isKeyPressed(Keyboard::W))
+			sprite_player.move(0.f, Move_W);
+		if (Keyboard::isKeyPressed(Keyboard::S))
+			sprite_player.move(0.f, Move_S);
+		if (Keyboard::isKeyPressed(Keyboard::Escape))
+			return 0;
+
+		float dX = mousePosWindow.x - sprite_player.getPosition().x;
+		float dY = mousePosWindow.y - sprite_player.getPosition().y;
+		float rotation = atan2(dY, dX);
+		rotation *= 180 / PI;
+		sprite_player.setRotation(rotation);
+
+		/*=======================================================================================================================*/
+		/*=======================================================================================================================*/
+		//Shooting
+		
+		if (Mouse::isButtonPressed(Mouse::Left) && elapsed1.asSeconds() >= 0.3f) { //GUN COOLDOWN
+			b1.shape.setPosition(playerCenter);
+			b1.currVelocity = aimDirNorm * b1.maxSpeed;
+			bullets.push_back(Bullet(b1));
+			/*if (elapsed1.asSeconds() >= 0.5f) { //Cooldown shooting
+
+				clock.restart();
+			}*/
+			
+			clock.restart();
+		}
+
+
+		for (size_t i = 0; i < bullets.size(); i++) {
+			bullets[i].shape.move(bullets[i].currVelocity);
+
+			//Out of Bounds
+			if (bullets[i].shape.getPosition().x < 0 || bullets[i].shape.getPosition().x > window.getSize().x ||
+				bullets[i].shape.getPosition().y < 0 || bullets[i].shape.getPosition().y > window.getSize().y) {
+				bullets.erase(bullets.begin() + i);
+			}
+			else {
+				for (size_t k = 0; k < enemies.size(); k++) {
+					if (bullets[i].shape.getGlobalBounds().intersects(enemies[k].getGlobalBounds())) {
+						bullets.erase(bullets.begin() + i);
+						enemies.erase(enemies.begin() + k);
+						
+					}
+					
+				}
+			}
+			if (bullets[i].shape.getGlobalBounds().intersects(sprite_enemy2.getGlobalBounds())) {
+				enemy_hp = enemy_hp - BulletStrength;
+				string health_enemy_string = to_string(enemy_hp);
+				health_enemy_text.setString(health_enemy_string);
+			}
+			if (bullets[i].shape.getGlobalBounds().intersects(sprite_enemy3.getGlobalBounds())) {
+				enemy3_hp = enemy3_hp - BulletStrength;
+				string health_enemy3_string = to_string(enemy3_hp);
+				health_enemy3_text.setString(health_enemy3_string);
+			}
+			if (bullets[i].shape.getGlobalBounds().intersects(sprite_enemy4.getGlobalBounds())) {
+				enemy4_hp = enemy4_hp - BulletStrength;
+				string health_enemy4_string = to_string(enemy4_hp);
+				health_enemy4_text.setString(health_enemy4_string);
+			}
+			if (bullets[i].shape.getGlobalBounds().intersects(sprite_enemy5.getGlobalBounds())) {
+				enemy5_hp = enemy5_hp - BulletStrength;
+				string health_enemy5_string = to_string(enemy5_hp);
+				health_enemy5_text.setString(health_enemy5_string);
+			}
+			if (bullets[i].shape.getGlobalBounds().intersects(gamer.sprite_boss.getGlobalBounds())) {
+				boss_hp = boss_hp - BulletStrength;
+				string health_boss_string = to_string(boss_hp);
+				health_boss_text.setString(health_boss_string);
+			}
+			
+			
+		}
+
+		/*=======================================================================================================================*/
+		/*=======================================================================================================================*/
+		//Collider
+
+		//-Right window collision
+		if (sprite_player.getPosition().x < 0.f) {
+			sprite_player.setPosition(0.f, sprite_player.getPosition().y);
+		}
+		//-Top window collision
+		if (sprite_player.getPosition().y < 0.f) {
+			sprite_player.setPosition(sprite_player.getPosition().x, 0.f);
+		}
+		//-Right window collision
+		if (sprite_player.getPosition().x + sprite_player.getGlobalBounds().width > WINDOW_WIDTH) {
+			sprite_player.setPosition(WINDOW_WIDTH - sprite_player.getGlobalBounds().width, sprite_player.getPosition().y);
+		}
+		//-Bottom window collision
+		if (sprite_player.getPosition().y + sprite_player.getGlobalBounds().height > WINDOW_HEIGHT) {
+			sprite_player.setPosition(sprite_player.getPosition().x, WINDOW_HEIGHT - sprite_player.getGlobalBounds().height);
+		}
+		/*=======================================================================================================================*/
+		//Wall collided
+		if (Keyboard::isKeyPressed(Keyboard::W) && sprite_player.getGlobalBounds().intersects(sprite_wall.getGlobalBounds())) {
+			Move_W = 0.f;
+		}
+		else{
+			Move_W = -3.f;
+			if (IsBuffSpeed == true) {
+				Move_W = -4.f;
+
+			}
+		}
+
+		if (Keyboard::isKeyPressed(Keyboard::A) && sprite_player.getGlobalBounds().intersects(sprite_wall.getGlobalBounds())) {
+			Move_A = 0.f;
+		}
+		else {
+			Move_A = -3.f;
+			if (IsBuffSpeed == true) {
+				Move_A = -4.f;
+			}
+		}
+
+		if (Keyboard::isKeyPressed(Keyboard::S) && sprite_player.getGlobalBounds().intersects(sprite_wall.getGlobalBounds())) {
+			Move_S = 0.f;
+		}
+		else {
+			Move_S = 3.f;
+			if (IsBuffSpeed == true) {
+				Move_S = 4.f;
+			}
+		}
+
+		if (Keyboard::isKeyPressed(Keyboard::D) && sprite_player.getGlobalBounds().intersects(sprite_wall.getGlobalBounds())) {
+			Move_D = 0.f;
+		}
+		else {
+			Move_D = 3.f;
+			if (IsBuffSpeed == true) {
+				Move_D = 4.f;
+			}
+		}
+
+		//If collided with Defend buff
+		if (sprite_player.getGlobalBounds().intersects(sprite_buff_defend.getGlobalBounds())) { 
+			sprite_enemy2.setPosition(70, 400); sprite_enemy3.setPosition(600, 300); sprite_enemy4.setPosition(375, 120); sprite_enemy5.setPosition(100, 100);
+			DamageReduction = 0.5f;
+			sprite_buff_defend.setPosition(10000, 10000);
+			sprite_player.setPosition(380, 500);
+			IsBuffDefend = true;
+			changelevel1 = true;
+			timer.restart();
+			movement_change1.restart();
+		}
+		//If collided with HP buff
+		if (sprite_player.getGlobalBounds().intersects(sprite_buff_hp.getGlobalBounds())) { 
+			sprite_enemy2.setPosition(70, 400); sprite_enemy3.setPosition(600, 300); sprite_enemy4.setPosition(375, 120); sprite_enemy5.setPosition(100, 100);
+			health = health + 100;
+			string health_string = to_string(health);
+			health_text.setString(health_string);
+			sprite_buff_hp.setPosition(10000, 10000);
+			IsBuffHealth = true;
+			changelevel1 = true;
+			sprite_player.setPosition(380, 500);
+			timer.restart();
+			movement_change1.restart();
+		}
+		//If collided with Speed buff
+		if (sprite_player.getGlobalBounds().intersects(sprite_buff_speed.getGlobalBounds())) { 
+			sprite_enemy2.setPosition(70, 400); sprite_enemy3.setPosition(600, 300); sprite_enemy4.setPosition(375, 120); sprite_enemy5.setPosition(100, 100);
+			Move_W = -4.f;
+			Move_A = -4.f;
+			Move_S = 4.f;
+			Move_D = 4.f;
+			sprite_buff_speed.setPosition(10000, 10000);
+			IsBuffSpeed = true;
+			changelevel1 = true;
+			sprite_player.setPosition(380, 500);
+			timer.restart();
+			movement_change1.restart();
+		}
+		//If collided with Strength buff
+		if (sprite_player.getGlobalBounds().intersects(sprite_buff_strength.getGlobalBounds())) {
+			sprite_enemy2.setPosition(70, 400); sprite_enemy3.setPosition(600, 300); sprite_enemy4.setPosition(375, 120); sprite_enemy5.setPosition(100, 100);
+			BulletStrength = 1;
+			sprite_buff_strength.setPosition(10000, 10000);
+			IsBuffStrength = true;
+			changelevel1 = true;
+			sprite_player.setPosition(380, 500);
+			timer.restart();
+			movement_change1.restart();
+		}
+		/*=======================================================================================================================*/
+		//Receive damage from enemy and lava
+		
+		if (sprite_player.getGlobalBounds().intersects(sprite_enemy2.getGlobalBounds())		||
+			sprite_player.getGlobalBounds().intersects(sprite_enemy3.getGlobalBounds())		||
+			sprite_player.getGlobalBounds().intersects(sprite_enemy4.getGlobalBounds())		||
+			sprite_player.getGlobalBounds().intersects(sprite_enemy5.getGlobalBounds())		||
+			sprite_player.getGlobalBounds().intersects(sprite_lava1.getGlobalBounds())		||
+			sprite_player.getGlobalBounds().intersects(sprite_lava2.getGlobalBounds())		||
+			sprite_player.getGlobalBounds().intersects(sprite_spiky1.getGlobalBounds())		||
+			sprite_player.getGlobalBounds().intersects(sprite_spiky2.getGlobalBounds())		||
+			sprite_player.getGlobalBounds().intersects(sprite_spiky_long.getGlobalBounds()) ||
+			sprite_player.getGlobalBounds().intersects(sprite_flame_long.getGlobalBounds()) ||
+			sprite_player.getGlobalBounds().intersects(sprite_flame_long2.getGlobalBounds()) ||
+			sprite_player.getGlobalBounds().intersects(gamer.sprite_boss.getGlobalBounds())) {
+			if (IsBuffDefend == true) {
+				health = (health - DamageReceive) + DamageReduction;
+				string health_string = to_string(health);
+				health_text.setString(health_string);
+			}
+			else if (IsBuffDefend == false) {
+				cout << "HIT!!" << endl;
+				health = health - DamageReceive;
+				string health_string = to_string(health);
+				health_text.setString(health_string);
+			}	
+		}
+
+		/*=======================================================================================================================*/
+		//Change level 1 to level 2
+		if (sprite_changelevel1Detector.getGlobalBounds().intersects(sprite_enemy2.getGlobalBounds()) &&
+			sprite_changelevel1Detector.getGlobalBounds().intersects(sprite_enemy3.getGlobalBounds()) &&
+			sprite_changelevel1Detector.getGlobalBounds().intersects(sprite_enemy4.getGlobalBounds()) && 
+			sprite_changelevel1Detector.getGlobalBounds().intersects(sprite_enemy5.getGlobalBounds())) {
+			changelevel2 = true;
+			sprite_ruby1.setPosition(205, 177); sprite_ruby2.setPosition(743, 37); sprite_ruby3.setPosition(656, 401); sprite_ruby4.setPosition(11, 7);
+			sprite_ruby5.setPosition(112, 453); sprite_ruby6.setPosition(420, 279); sprite_ruby7.setPosition(725, 559);
+			sprite_spiky1.setPosition(sf::Vector2f(94, 78));
+			sprite_spiky2.setPosition(sf::Vector2f(582, 138));
+			sprite_spiky_long.setPosition(sf::Vector2f(366, 267));
+			sprite_player.setPosition(250, 500);
+			sprite_changelevel2Detector.setPosition(-105, -105);
+		}
+
+		//Change level 2 to level 3
+		if (sprite_player.getGlobalBounds().intersects(sprite_ruby1.getGlobalBounds())) {
+			sprite_ruby1.setPosition(-100, -100);
+		}
+		if (sprite_player.getGlobalBounds().intersects(sprite_ruby2.getGlobalBounds())) {
+			sprite_ruby2.setPosition(-100, -100);
+		}
+		if (sprite_player.getGlobalBounds().intersects(sprite_ruby3.getGlobalBounds())) {
+			sprite_ruby3.setPosition(-100, -100);
+		}
+		if (sprite_player.getGlobalBounds().intersects(sprite_ruby4.getGlobalBounds())) {
+			sprite_ruby4.setPosition(-100, -100);
+		}
+		if (sprite_player.getGlobalBounds().intersects(sprite_ruby5.getGlobalBounds())) {
+			sprite_ruby5.setPosition(-100, -100);
+		}
+		if (sprite_player.getGlobalBounds().intersects(sprite_ruby6.getGlobalBounds())) {
+			sprite_ruby6.setPosition(-100, -100);
+		}
+		if (sprite_player.getGlobalBounds().intersects(sprite_ruby7.getGlobalBounds())) {
+			sprite_ruby7.setPosition(-100, -100);
+		}
+
+		if (sprite_changelevel2Detector.getGlobalBounds().intersects(sprite_ruby1.getGlobalBounds()) &&
+			sprite_changelevel2Detector.getGlobalBounds().intersects(sprite_ruby2.getGlobalBounds()) &&
+			sprite_changelevel2Detector.getGlobalBounds().intersects(sprite_ruby3.getGlobalBounds()) &&
+			sprite_changelevel2Detector.getGlobalBounds().intersects(sprite_ruby4.getGlobalBounds()) &&
+			sprite_changelevel2Detector.getGlobalBounds().intersects(sprite_ruby5.getGlobalBounds()) &&
+			sprite_changelevel2Detector.getGlobalBounds().intersects(sprite_ruby6.getGlobalBounds()) &&
+			sprite_changelevel2Detector.getGlobalBounds().intersects(sprite_ruby7.getGlobalBounds())) {
+			changelevel2 = false;
+			changelevel3 = true;
+			sprite_player.setPosition(380, 500);
+			gamer.sprite_boss.setPosition(342, 109);
+			sprite_flame_long.setPosition(sf::Vector2f(136, 156));
+			sprite_flame_long2.setPosition(sf::Vector2f(618, 156));
+			sprite_spiky1.setPosition(sf::Vector2f(2000, 2000));
+			sprite_spiky2.setPosition(sf::Vector2f(2000, 2000));
+			sprite_spiky_long.setPosition(sf::Vector2f(3660, 2670));
+			movement_change1.restart();
+			sprite_ruby2.setPosition(999, 999); sprite_ruby3.setPosition(999, 999); //THE END OF SCRIPT LEVEL 2 ---> LEVEL 3
+		}
+
+		//Change level 3 to end
+		if (gamer.sprite_boss.getGlobalBounds().intersects(sprite_changelevel3Detector.getGlobalBounds())) {
+			system("CLS");
+			float totalTimer = elapsed_timer.asSeconds();
+			cout << R"(
+
+ _   _   _____   _____   _____   _____  ______  __   __  _   _ 
+| | | | |_   _| /  __ \ |_   _| |  _  | | ___ \ \ \ / / | | | |
+| | | |   | |   | /  \/   | |   | | | | | |_/ /  \ V /  | | | |
+| | | |   | |   | |       | |   | | | | |    /    \ /   | | | |
+\ \_/ /  _| |_  | \__/\   | |   \ \_/ / | |\ \    | |   |_| |_|
+ \___/   \___/   \____/   \_/    \___/  \_| \_|   \_/   (_) (_)
+                                                               
+                                                               
+
+)" << endl;
+
+			cout << "CONGRATULATIONS!! YOU WIN THE GAME!!" << endl << endl << "Your final timer is: " << totalTimer << endl;
+
+			ofstream myfile("savefile/best_time.txt");
+			if (myfile.is_open())
+			{
+				myfile << totalTimer;
+				myfile.close();
+			}
+			else cout << "Unable to open file";
+			window.close();
+		}
+
+
+
+		/*=======================================================================================================================*/
+		/*=======================================================================================================================*/
+		//Positioning//Enemy Movement//
+		//Player_x.setPosition;
+		//sprite_enemy2.setPosition(player.getPosition().x - 5, player.getPosition().y - 5);
+		health_text.setPosition(sprite_player.getPosition().x, sprite_player.getPosition().y + 45);
+		health_enemy_text.setPosition(sprite_enemy2.getPosition().x, sprite_enemy2.getPosition().y + 50);
+		health_enemy3_text.setPosition(sprite_enemy3.getPosition().x, sprite_enemy3.getPosition().y + 50);
+		health_enemy4_text.setPosition(sprite_enemy4.getPosition().x, sprite_enemy4.getPosition().y + 50);
+		health_enemy5_text.setPosition(sprite_enemy5.getPosition().x, sprite_enemy5.getPosition().y + 50);
+
+		health_boss_text.setPosition(gamer.sprite_boss.getPosition().x, gamer.sprite_boss.getPosition().y + 200);
+
+
+		/*=======================================================================================================================*/
+		/*=======================================================================================================================*/
+		//Draw
+		window.clear();
+
+		//for (size_t i = 0; i < enemies.size(); i++) {
+		//	window.draw(enemies[i]);
+		//}
+
+		window.draw(sprite_buffroom);
+		
+		if (changelevel1 == true) { //LEVEL 1 SCRIPT
+			sprite_buff_speed.setPosition(1000, 1000);	sprite_buff_hp.setPosition(1000, 1000);	sprite_buff_strength.setPosition(1000, 1000);	sprite_buff_defend.setPosition(1000, 1000);
+			
+			sprite_buffroomText1.setPosition(1000, 1000);
+			if (enemy_hp <= 0) {
+				sprite_enemy2.setPosition(1000, 1000);
+			}
+			if (enemy3_hp <= 0) {
+				sprite_enemy3.setPosition(1000, 1000);
+			}
+			if (enemy4_hp <= 0) {
+				sprite_enemy4.setPosition(1000, 1000);
+			}
+			if (enemy5_hp <= 0) {
+				sprite_enemy5.setPosition(1000, 1000);
+			}
+			sprite_wall.setPosition(320, 314);
+			sprite_wall2.setPosition(430, 314);
+			best_timer_text.setPosition(1000, 1000);
+			window.draw(sprite_stone);
+			window.draw(sprite_enemy2);
+			window.draw(sprite_enemy3);
+			window.draw(sprite_enemy4);
+			window.draw(sprite_enemy5);
+			window.draw(sprite_wall);
+			window.draw(sprite_wall2);
+			window.draw(timer_text);
+
+		}
+		
+		if (changelevel2 == true) { //LEVEL 2 SCRIPT
+			changelevel1 = false;
+			sprite_stone.setPosition(1000, 1000);
+			sprite_wall.setPosition(1000, 1000); sprite_wall2.setPosition(1001, 1001);
+			sprite_enemy2.setPosition(1000, 40);
+			sprite_level2.setPosition(0, 0);
+			sprite_changelevel2Detector.setPosition(-100, -100);
+			sprite_spiky_long.rotate(0.9f);
+			window.draw(sprite_changelevel2Detector);
+			window.draw(sprite_level2);
+			window.draw(sprite_ruby1);
+			window.draw(sprite_ruby2);
+			window.draw(sprite_ruby3);
+			window.draw(sprite_ruby4);
+			window.draw(sprite_ruby5);
+			window.draw(sprite_ruby6);
+			window.draw(sprite_ruby7);
+			window.draw(timer_text);
+
+			if (IsBuffSpeed != true) {
+				Move_W = -1.5f;
+				Move_A = -1.5f;
+				Move_S = 1.5f;
+				Move_D = 1.5f;
+			}
+
+		}
+
+		if (health <= 0) {
+			window.close();
+			std::cout << R"(
+            _____   _____
+           /     \ /     \
+     ,    |       '       |
+     I  __L________       L__
+O====I[]__________/     ./___>
+     I       \.       ./
+     `         \.   ./
+                 \ /
+                  '
+)" << endl
+   << "[[[[   YOU HAVE BEEN KILLED!!   ]]]]" << endl;
+		}
+
+		if (changelevel3 == true) { //LEVEL 3 SCRIPT
+			sprite_level3.setPosition(0, 0); 
+			sprite_lava1.setPosition(sf::Vector2f(768, 448));	sprite_lava2.setPosition(sf::Vector2f(-96, 448));
+			sprite_flame_long.rotate(1.1f);
+			sprite_flame_long2.rotate(1.f);
+			window.draw(sprite_level3);
+			window.draw(sprite_lava1); window.draw(sprite_lava2);
+			window.draw(gamer.sprite_boss);
+			if (boss_hp <= 0) {
+				gamer.sprite_boss.setPosition(4000, 4000);
+			}
+			window.draw(timer_text);
+		}
+		window.draw(sprite_buff_defend);
+		window.draw(sprite_buff_speed);
+		window.draw(sprite_buff_hp);
+		window.draw(sprite_buff_strength);
+		window.draw(health_text);
+		window.draw(sprite_buffroomText1);
+		window.draw(health_enemy_text);
+		window.draw(health_enemy3_text);
+		window.draw(health_enemy4_text);
+		window.draw(health_enemy5_text);
+		window.draw(health_boss_text);
+		window.draw(sprite_spiky1);
+		window.draw(sprite_spiky2);
+		window.draw(sprite_spiky_long);
+		window.draw(sprite_flame_long);
+		window.draw(sprite_flame_long2);
+		window.draw(best_timer_text);
+
+		for (size_t i = 0; i < bullets.size(); i++) {
+			window.draw(bullets[i].shape);
+		}
+		window.draw(sprite_player);
+		
+		/////////////////////////////////////////////////
+		/////////////////////////////////////////////////
+		//Testing debug window
+
+		//sprite_enemy2.move(sprite_player.getPosition().x + 5.f, sprite_player.getPosition().y + 5.f);
+		//sprite_enemy2.move(1.f, 0.f);
+		
+		//std::cout << elapsed1.asSeconds();
+		//cout << "za warudo";
+		//cout << changelevel1 << endl; //[LEVEL1 BOOL]
+		//cout << changelevel2; //[LEVEL2 BOOL]
+		//cout << EnemyCounter;
+		/////////////////////////////////////////////////
+		/////////////////////////////////////////////////
+
+		window.display();
+	}
+	//Hello, meove here
+	//Some important notes
+	//- Any "delete" object goes from range (10000, 10000) into (20000, 20000)
+	//- So if you have 20K monitor or above and change windows resolution into VideoMode(20000, 20000) you can see my trash
+	system("pause");
+	return 0;
+}
+
+
